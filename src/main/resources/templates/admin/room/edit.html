@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cập nhật phòng</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .preview-img {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <div class="card shadow p-4">
+
+        <h3 class="mb-4">✏️ Cập nhật phòng</h3>
+
+        <!-- ⚠️ bắt buộc để upload file -->
+        <form th:action="@{/rooms/save}"
+              method="post"
+              th:object="${room}"
+              enctype="multipart/form-data">
+
+            <!-- ID -->
+            <input type="hidden" th:field="*{roomId}">
+
+            <!-- ROOM NUMBER -->
+            <div class="mb-3">
+                <label>Số phòng</label>
+                <input type="text" class="form-control" th:field="*{roomNumber}">
+            </div>
+
+            <!-- CAPACITY -->
+            <div class="mb-3">
+                <label>Sức chứa</label>
+                <input type="number" class="form-control" th:field="*{capacity}">
+            </div>
+
+            <!-- CURRENT OCCUPANCY -->
+            <div class="mb-3">
+                <label>Đang ở</label>
+                <input type="number" class="form-control" th:field="*{currentOccupancy}">
+            </div>
+
+            <!-- PRICE -->
+            <div class="mb-3">
+                <label>Giá phòng</label>
+                <input type="number" step="0.01" class="form-control" th:field="*{roomPrice}">
+            </div>
+
+            <!-- IMAGE UPLOAD -->
+            <div class="mb-3">
+                <label>Hình ảnh mới (nếu muốn đổi)</label>
+                <input type="file" class="form-control"
+                       name="imageFile"
+                       accept="image/*"
+                       onchange="previewImage(event)">
+            </div>
+
+            <!-- ẢNH CŨ -->
+            <div class="mb-3">
+                <label>Ảnh hiện tại</label><br>
+
+                <img th:if="${room.image != null}"
+                     th:src="@{${room.image}}"
+                     class="preview-img">
+
+                <p th:if="${room.image == null}" class="text-muted">
+                    Chưa có ảnh
+                </p>
+            </div>
+
+            <!-- PREVIEW ẢNH MỚI -->
+            <div class="mb-3">
+                <img id="preview" class="preview-img" style="display:none;">
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="mb-3">
+                <label>Mô tả</label>
+                <textarea class="form-control" rows="3" th:field="*{description}"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Cập nhật
+            </button>
+
+            <a href="/rooms" class="btn btn-secondary">
+                Quay lại
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            const img = document.getElementById('preview');
+            img.src = reader.result;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
+</body>
+</html>

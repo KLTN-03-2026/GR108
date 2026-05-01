@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ký túc xá | Đặt phòng sinh viên</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    body{
+      background: #f4f7ff;
+      font-family: 'Inter', sans-serif;
+      color:#0f172a;
+    }
+
+    .navbar{
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .brand{
+      font-weight:800;
+    }
+
+    .avatar{
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      background:linear-gradient(135deg,#6366f1,#06b6d4);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:white;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .hero{
+      background: linear-gradient(135deg,#6366f1,#06b6d4);
+      color:white;
+      padding:70px 20px 40px;
+      text-align:center;
+      border-radius:0 0 40px 40px;
+    }
+
+    .hero h2{
+      font-weight:800;
+      font-size:36px;
+    }
+
+    .search-box{
+      max-width:560px;
+      margin:auto;
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .room-card{
+      border:none;
+      border-radius:20px;
+      overflow:hidden;
+      background:white;
+      box-shadow:0 10px 25px rgba(0,0,0,0.08);
+      transition:0.2s;
+    }
+
+    .room-card:hover{
+      transform: translateY(-5px);
+    }
+
+    .room-img{
+      height:200px;
+      width:100%;
+      object-fit:cover;
+    }
+
+    .price{
+      font-weight:800;
+      color:#16a34a;
+    }
+
+    .badge-ok{background:#dcfce7;color:#16a34a;padding:5px 10px;border-radius:999px;font-size:12px;}
+    .badge-full{background:#fee2e2;color:#dc2626;padding:5px 10px;border-radius:999px;font-size:12px;}
+
+    .btn-book{
+      width:100%;
+      border-radius:12px;
+      font-weight:600;
+    }
+  </style>
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+
+    <!-- LOGO -->
+    <a class="navbar-brand brand text-primary" href="/">
+      🏠 KTX Sinh Viên
+    </a>
+
+    <!-- CHƯA ĐĂNG NHẬP -->
+    <!-- CHƯA ĐĂNG NHẬP -->
+    <div sec:authorize="isAnonymous()" class="ms-auto">
+      <a class="btn btn-primary btn-sm" th:href="@{/login}">
+        Đăng nhập
+      </a>
+    </div>
+
+    <!-- ĐÃ ĐĂNG NHẬP -->
+    <div sec:authorize="isAuthenticated()" class="ms-auto dropdown d-flex align-items-center gap-2">
+
+  <span class="me-2 fw-semibold text-dark">
+    Xin chào, <span sec:authentication="name"></span>
+  </span>
+
+      <div class="avatar dropdown-toggle"
+           data-bs-toggle="dropdown">
+
+        <span th:text="${#strings.substring(#authentication.name,0,1).toUpperCase()}"></span>
+
+      </div>
+
+      <ul class="dropdown-menu dropdown-menu-end shadow">
+        <li class="px-3 py-2">
+          👤 <strong sec:authentication="name"></strong>
+        </li>
+
+        <li><hr class="dropdown-divider"></li>
+
+        <li>
+          <a class="dropdown-item" th:href="@{/profile}">
+            📄 Thông tin cá nhân
+          </a>
+        </li>
+
+        <li>
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="dropdown-item text-danger">
+              🚪 Đăng xuất
+            </button>
+          </form>
+        </li>
+      </ul>
+
+    </div>
+
+  </div>
+</nav>
+<!-- HERO -->
+<section class="hero">
+  <h2>Khám phá ký túc xá hiện đại</h2>
+  <p>Tìm phòng nhanh – Đặt phòng dễ – Ở thoải mái</p>
+
+  <form th:action="@{/rooms}" method="get">
+    <input class="form-control search-box mt-3"
+           name="keyword"
+           placeholder="🔍 Tìm phòng..." />
+  </form>
+</section>
+
+<!-- ROOM LIST -->
+<div class="container py-5">
+  <div class="row g-4">
+
+    <div class="col-md-4" th:each="room : ${rooms}">
+      <div class="room-card">
+
+        <img class="room-img" th:src="${room.imageUrl}" />
+
+        <div class="p-3">
+
+          <div class="d-flex justify-content-between">
+            <h5 th:text="${room.roomNumber}">A101</h5>
+
+            <span th:if="${room.available}" class="badge-ok">Còn trống</span>
+            <span th:if="${!room.available}" class="badge-full">Hết phòng</span>
+          </div>
+
+          <p class="text-muted small" th:text="${room.description}"></p>
+
+          <div class="d-flex justify-content-between">
+            <span class="price" th:text="${room.price} + 'đ/tháng'"></span>
+          </div>
+
+          <a th:if="${room.available}"
+             th:href="@{'/rooms/book/' + ${room.id}}"
+             class="btn btn-primary btn-book mt-3">
+            Đặt phòng
+          </a>
+
+          <button th:if="${!room.available}"
+                  class="btn btn-secondary btn-book mt-3" disabled>
+            Hết chỗ
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="text-center py-4 text-muted">
+  © 2026 Ký túc xá sinh viên
+</div>
+
+</body>
+</html>
