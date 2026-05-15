@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý đặt phòng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+<div class="container py-4">
+
+    <h4 class="mb-4">
+        📋 Danh sách đơn đặt phòng
+        <span class="badge bg-warning text-dark ms-2"
+              th:text="${pendingCount} + ' chờ duyệt'"></span>
+    </h4>
+    <a th:href="@{/admin/home}" class="btn btn-outline-secondary mb-3">
+        ⬅ Quay lại trang Home Admin
+    </a>
+    <table class="table table-bordered table-hover bg-white shadow-sm rounded">
+        <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Sinh viên</th>
+            <th>Phòng</th>
+            <th>Tiền cọc</th>
+            <th>Ảnh</th>
+            <th>Ngày đặt</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="b : ${bookings}">
+
+            <td th:text="${b.bookingId}"></td>
+
+            <td>
+                <div class="fw-bold" th:text="${b.student.user.fullName}"></div>
+                <small class="text-muted" th:text="${b.student.studentCode}"></small>
+            </td>
+
+            <td>Phòng <span class="fw-bold" th:text="${b.room.roomNumber}"></span></td>
+
+            <td class="text-success fw-bold"
+                th:text="${#numbers.formatDecimal(b.depositAmount,0,'COMMA',0,'POINT')} + ' đ'">
+            </td>
+
+            <td>
+                <a th:if="${b.paymentProofImage != null}"
+                   th:href="@{'/uploads/' + ${b.paymentProofImage}}"
+                   target="_blank">
+                    <img th:src="@{'/uploads/' + ${b.paymentProofImage}}"
+                         style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                </a>
+                <span th:if="${b.paymentProofImage == null}" class="text-muted">Chưa có</span>
+            </td>
+
+            <td th:text="${#temporals.format(b.bookingDate,'dd/MM/yyyy HH:mm')}"></td>
+
+            <td>
+    <span th:switch="${b.status.name()}">
+
+        <span th:case="'PENDING'" class="badge bg-warning text-dark">⏳ Chờ duyệt</span>
+        <span th:case="'APPROVED'" class="badge bg-success">✅ Đã duyệt</span>
+        <span th:case="'REJECTED'" class="badge bg-danger">❌ Từ chối</span>
+        <span th:case="'CANCELLED'" class="badge bg-secondary">🚫 Huỷ</span>
+        <span th:case="'CHECKED_IN'" class="badge bg-primary">🏠 Đang ở</span>
+        <span th:case="'CHECKED_OUT'" class="badge bg-dark">🏁 Đã trả phòng</span>
+        <span th:case="'EXPIRED'" class="badge bg-secondary">⌛ Hết hạn</span>
+
+        <span th:case="*" class="badge bg-secondary">Không rõ</span>
+    </span>
+            </td>
+
+            <td class="d-flex gap-2 flex-wrap">
+
+                <!-- PENDING -->
+                <th:block th:if="${b.status.name() == 'PENDING'}">
+                    <button type="button" class="btn btn-success btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:attr="data-action=@{'/admin/bookings/' + ${b.bookingId} + '/approve'},
+                                     data-title='Xác nhận duyệt đơn',
+                                     data-desc='Duyệt đơn #' + ${b.bookingId} + ' của ' + ${b.student.user.fullName} + '?',
+                                     data-btn-label='✅ Duyệt',
+                                     data-btn-class='btn-success',
+                                     data-need-note='false'">
+                        ✅ Duyệt
+                    </button>
+
+                    <button type="button" class="btn btn-danger btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:attr="data-action=@{'/admin/bookings/' + ${b.bookingId} + '/reject'},
+                                     data-title='Xác nhận từ chối',
+                                     data-desc='Từ chối đơn #' + ${b.bookingId} + ' của ' + ${b.student.user.fullName} + '. Vui lòng nhập lý do:',
+                                     data-btn-label='❌ Từ chối',
+                                     data-btn-class='btn-danger',
+                                     data-need-note='true'">
+                        ❌ Từ chối
+                    </button>
+
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:attr="data-action=@{'/admin/bookings/' + ${b.bookingId} + '/cancel'},
+                                     data-title='Xác nhận huỷ đơn',
+                                     data-desc='Huỷ đơn #' + ${b.bookingId} + ' của ' + ${b.student.user.fullName} + '?',
+                                     data-btn-label='🚫 Huỷ đơn',
+                                     data-btn-class='btn-secondary',
+                                     data-need-note='false'">
+                        🚫 Huỷ
+                    </button>
+
+                    <button type="button" class="btn btn-warning btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:attr="data-action=@{'/admin/bookings/' + ${b.bookingId} + '/expire'},
+                                     data-title='Đánh dấu hết hạn',
+                                     data-desc='Đánh dấu hết hạn đơn #' + ${b.bookingId} + ' của ' + ${b.student.user.fullName} + '?',
+                                     data-btn-label='⌛ Expire',
+                                     data-btn-class='btn-warning text-dark',
+                                     data-need-note='false'">
+                        ⌛ Expire
+                    </button>
+                </th:block>
+
+                <!-- APPROVED -->
+                <th:block th:if="${b.status.name() == 'APPROVED'}">
+                    <button type="button" class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:attr="data-action=@{'/admin/bookings/' + ${b.bookingId} + '/check-in'},
+                                     data-title='Xác nhận Check-in',
+                                     data-desc='Check-in đơn #' + ${b.bookingId} + ' của ' + ${b.student.user.fullName} + '?',
+                                     data-btn-label='🏠 Check-in',
+                                     data-btn-class='btn-primary',
+                                     data-need-note='false'">
+                        🏠 Check-in
+                    </button>
+                </th:block>
+
+                <!-- CHECKED IN -->
+                <th:block th:if="${b.status.name() == 'CHECKED_IN'}">
+                    <button type="button" class="btn btn-dark btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:attr="data-action=@{'/admin/bookings/' + ${b.bookingId} + '/check-out'},
+                                     data-title='Xác nhận Check-out',
+                                     data-desc='Check-out đơn #' + ${b.bookingId} + ' của ' + ${b.student.user.fullName} + '?',
+                                     data-btn-label='🏁 Check-out',
+                                     data-btn-class='btn-dark',
+                                     data-need-note='false'">
+                        🏁 Check-out
+                    </button>
+                </th:block>
+
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== CONFIRM MODAL ===== -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="confirmModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body pt-2">
+                <p class="text-muted mb-2" id="confirmModalDesc"></p>
+
+                <!-- Ô nhập lý do — chỉ hiện khi reject -->
+                <div id="noteWrapper" style="display:none;">
+                    <textarea id="noteInput" name="note" class="form-control" rows="3"
+                              placeholder="Nhập lý do từ chối..."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Huỷ bỏ
+                </button>
+                <form id="confirmForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <!-- hidden field chứa nội dung note, chỉ dùng khi reject -->
+                    <input type="hidden" id="noteHidden" name="note" value="">
+                    <button type="submit" class="btn" id="confirmBtn"></button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const modal        = document.getElementById('confirmModal');
+    const noteWrapper  = document.getElementById('noteWrapper');
+    const noteInput    = document.getElementById('noteInput');
+    const noteHidden   = document.getElementById('noteHidden');
+    const confirmForm  = document.getElementById('confirmForm');
+    const confirmBtn   = document.getElementById('confirmBtn');
+
+    // Khi modal mở: điền thông tin từ data-* của nút vừa nhấn
+    modal.addEventListener('show.bs.modal', function (e) {
+        const trigger = e.relatedTarget;
+
+        document.getElementById('confirmModalTitle').textContent = trigger.dataset.title;
+        document.getElementById('confirmModalDesc').textContent  = trigger.dataset.desc;
+
+        confirmBtn.textContent = trigger.dataset.btnLabel;
+        confirmBtn.className   = 'btn ' + trigger.dataset.btnClass;
+        confirmForm.action     = trigger.dataset.action;
+
+        // Hiện / ẩn ô note tuỳ action
+        const needNote = trigger.dataset.needNote === 'true';
+        noteWrapper.style.display = needNote ? 'block' : 'none';
+        noteInput.value   = '';
+        noteHidden.value  = '';
+    });
+
+    // Trước khi submit: copy nội dung textarea vào hidden input
+    confirmForm.addEventListener('submit', function () {
+        noteHidden.value = noteInput.value;
+    });
+</script>
+</body>
+</html>
